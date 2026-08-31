@@ -9,7 +9,10 @@ class PlotWidget(QWidget):
     """Dibuja los sensores seleccionados contra el número de muestra (eje X)."""
 
     COLORS = (QColor("#d32f2f"), QColor("#1976d2"), QColor("#388e3c"), QColor("#7b1fa2"))
-    MAX_POINTS = 1_000
+    MAX_POINTS = 60_000
+    MAX_RENDERED_POINTS = 6_000
+    GRID_SECONDS = 10
+    GRID_Y_UNITS = 10
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,7 +29,11 @@ class PlotWidget(QWidget):
         self.request_refresh()
 
     def set_data(self, rows, channels, total_samples):
-        self.rows = list(rows)[-self.MAX_POINTS :]
+        rows = list(rows)[-self.MAX_POINTS :]
+        # Se conservan 60 000 muestras, pero se decima el dibujo para que la GUI
+        # permanezca fluida incluso con cuatro sensores a alta frecuencia.
+        step = max(1, len(rows) // self.MAX_RENDERED_POINTS)
+        self.rows = rows[::step]
         self.channels = list(channels)
         self.total_samples = total_samples
         self.request_refresh()
@@ -63,17 +70,33 @@ class PlotWidget(QWidget):
         painter.drawText(plot.left(), self.height() - 8, str(self.x_min))
         painter.drawText(plot.right() - 24, self.height() - 8, str(self.x_max))
 
-        first_sample = self.total_samples - len(self.rows) + 1
+        grid_pen = QPen(QColor("#dddddd"), 1)
+        painter.setPen(grid_pen)
+        for second in range(((self.x_min // self.GRID_SECONDS) + 1) * self.GRID_SECONDS, self.x_max, self.GRID_SECONDS):
+            x = plot.left() + (second - self.x_min) * plot.width() / (self.x_max - self.x_min)
+            painter.drawLine(QPointF(x, plot.top()), QPointF(x, plot.bottom()))
+            painter.drawText(int(x) - 10, self.height() - 8, f"{second}s")
+        for value in range(((self.y_min // self.GRID_Y_UNITS) + 1) * self.GRID_Y_UNITS, self.y_max, self.GRID_Y_UNITS):
+            y = plot.bottom() - (value - self.y_min) * plot.height() / (self.y_max - self.y_min)
+            painter.drawLine(QPointF(plot.left(), y), QPointF(plot.right(), y))
+
+        legend_x = plot.left() + 4
+        for channel in self.channels:
+            painter.setPen(QPen(self.COLORS[channel], 2))
+            painter.drawLine(legend_x, plot.top() + 10, legend_x + 14, plot.top() + 10)
+            painter.drawText(legend_x + 17, plot.top() + 14, f"T_{channel + 1}")
+            legend_x += 42
+
         for channel in self.channels:
             painter.setPen(QPen(self.COLORS[channel], 1.5))
             previous = None
-            for offset, row in enumerate(self.rows):
-                sample_number = first_sample + offset
-                value = row[channel + 1]
-                if not (self.x_min <= sample_number <= self.x_max and self.y_min <= value <= self.y_max):
+            for row in self.rows:
+                elapsed_seconds = row[1]
+                value = row[channel + 2]
+                if not (self.x_min <= elapsed_seconds <= self.x_max and self.y_min <= value <= self.y_max):
                     previous = None
                     continue
-                x = plot.left() + (sample_number - self.x_min) * plot.width() / (self.x_max - self.x_min)
+                x = plot.left() + (elapsed_seconds - self.x_min) * plot.width() / (self.x_max - self.x_min)
                 y = plot.bottom() - (value - self.y_min) * plot.height() / (self.y_max - self.y_min)
                 if previous is not None:
                     painter.drawLine(previous, QPointF(x, y))

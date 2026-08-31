@@ -25,6 +25,10 @@ class MainWindow(QMainWindow):
         self.ui.comboBox_Baud.setCurrentText("9600")
         self.setup_connections()
         self.ui.pushButton_Detener.setEnabled(False)
+        self.ui.spinBox.setValue(0)
+        self.ui.spinBox_2.setValue(300)
+        self.ui.spinBox_3.setValue(-127)
+        self.ui.spinBox_4.setValue(100)
         self.Actualizar_Lista_Puertos()
 
         self.connection_timer = QTimer(self)

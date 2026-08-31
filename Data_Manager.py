@@ -18,7 +18,8 @@ class DataManager:
     vacía al CSV como máximo cada segundo o al reunir 250 muestras.
     """
 
-    MEMORY_BUFFER_SIZE = 10_000
+    # Permite conservar hasta 300 s a 200 muestras/s para la gráfica.
+    MEMORY_BUFFER_SIZE = 60_000
     FILE_BUFFER_SIZE = 250
     MAX_DISPLAY_ROWS = 1_000
 
@@ -31,6 +32,7 @@ class DataManager:
         self.csv_writer = None
         self.total_samples = 0
         self.on_data_added = None
+        self.acquisition_started_at = None
 
         self.save_timer = QTimer()
         self.save_timer.timeout.connect(self.flush_to_file)
@@ -47,11 +49,17 @@ class DataManager:
 
     def process_data(self, raw_data):
         """Procesa una línea válida sin descartar sensores no visibles en la tabla."""
+        # Estar conectado no implica adquirir: no se muestra ni almacena nada
+        # hasta que el usuario presione Iniciar.
+        if not self.is_recording:
+            return False
         values = self.parse_data(raw_data)
         if values is None:
             return False
 
-        self.add_to_buffer([datetime.now(), *values])
+        timestamp = datetime.now()
+        elapsed_seconds = (timestamp - self.acquisition_started_at).total_seconds()
+        self.add_to_buffer([timestamp, elapsed_seconds, *values])
         return True
 
     def get_selected_channels(self):
@@ -82,11 +90,11 @@ class DataManager:
         row = table.rowCount()
         table.insertRow(row)
         table.setItem(row, 0, QTableWidgetItem(str(self.total_samples)))
-        table.setItem(row, 1, QTableWidgetItem(row_data[0].strftime("%H:%M:%S.%f")[:-3]))
+        table.setItem(row, 1, QTableWidgetItem(f"{row_data[1]:.3f}"))
 
         # Las cuatro columnas se mantienen aunque el usuario las oculte. Así un
         # cambio de checkbox no reconstruye ni reinicia las filas existentes.
-        for column, value in enumerate(row_data[1:], start=2):
+        for column, value in enumerate(row_data[2:], start=2):
             table.setItem(row, column, QTableWidgetItem(f"{value:.2f}"))
 
         if table.rowCount() > self.MAX_DISPLAY_ROWS:
@@ -95,7 +103,11 @@ class DataManager:
 
     @staticmethod
     def _csv_row(row):
-        return [row[0].strftime("%Y-%m-%d %H:%M:%S.%f")[:-3], *(f"{value:.2f}" for value in row[1:])]
+        return [
+            row[0].strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+            f"{row[1]:.3f}",
+            *(f"{value:.2f}" for value in row[2:]),
+        ]
 
     def flush_to_file(self):
         """Pasa las muestras pendientes a disco; no hace nada fuera de grabación."""
@@ -119,7 +131,10 @@ class DataManager:
             self.current_file = open(filepath, "w", newline="", encoding="utf-8")
             self.csv_writer = csv.writer(self.current_file)
             # Siempre se guardan los cuatro canales, incluso si no se muestran.
-            self.csv_writer.writerow(["Timestamp", "T_1", "T_2", "T_3", "T_4"])
+            self.csv_writer.writerow(["Timestamp", "Elapsed_s", "T_1", "T_2", "T_3", "T_4"])
+            self.clear_buffer()
+            self.total_samples = 0
+            self.acquisition_started_at = datetime.now()
             self.is_recording = True
             print(f"Grabación iniciada: {filepath}")
             return True
@@ -154,7 +169,7 @@ class DataManager:
         try:
             with open(filepath, "w", newline="", encoding="utf-8") as output_file:
                 writer = csv.writer(output_file)
-                writer.writerow(["Timestamp", "T_1", "T_2", "T_3", "T_4"])
+                writer.writerow(["Timestamp", "Elapsed_s", "T_1", "T_2", "T_3", "T_4"])
                 writer.writerows(self._csv_row(row) for row in self.data_buffer)
             QMessageBox.information(None, "Exportación exitosa", f"Datos exportados a: {filepath}")
         except OSError as error:
