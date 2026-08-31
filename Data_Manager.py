@@ -30,6 +30,7 @@ class DataManager:
         self.current_file = None
         self.csv_writer = None
         self.total_samples = 0
+        self.on_data_added = None
 
         self.save_timer = QTimer()
         self.save_timer.timeout.connect(self.flush_to_file)
@@ -72,6 +73,8 @@ class DataManager:
                 self.flush_to_file()
 
         self.update_table(row_data)
+        if self.on_data_added is not None:
+            self.on_data_added()
 
     def update_table(self, row_data):
         """Muestra la muestra nueva usando únicamente los sensores seleccionados."""
@@ -81,8 +84,10 @@ class DataManager:
         table.setItem(row, 0, QTableWidgetItem(str(self.total_samples)))
         table.setItem(row, 1, QTableWidgetItem(row_data[0].strftime("%H:%M:%S.%f")[:-3]))
 
-        for column, channel in enumerate(self.get_selected_channels(), start=2):
-            table.setItem(row, column, QTableWidgetItem(f"{row_data[channel + 1]:.2f}"))
+        # Las cuatro columnas se mantienen aunque el usuario las oculte. Así un
+        # cambio de checkbox no reconstruye ni reinicia las filas existentes.
+        for column, value in enumerate(row_data[1:], start=2):
+            table.setItem(row, column, QTableWidgetItem(f"{value:.2f}"))
 
         if table.rowCount() > self.MAX_DISPLAY_ROWS:
             table.removeRow(0)

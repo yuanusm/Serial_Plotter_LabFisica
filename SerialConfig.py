@@ -43,8 +43,8 @@ class SerialManager:
             self.is_connected = True
             self.port = port
             self.baudrate = baudrate
-            self.ui.pushButton_Conectar.setEnabled(False)
-            self.ui.pushButton_Detener.setEnabled(True)
+            self.ui.pushButton_Conectar.setText("Desconectar")
+            self.ui.pushButton_Detener.setEnabled(False)
             self.ui.ConfirmacionConectado.setText(f"Conectado a {port} a {baudrate} baudios")
             self.ui.ConfirmacionConectado.setStyleSheet("color: green;")
         except serial.SerialException as error:
@@ -70,7 +70,7 @@ class SerialManager:
             self.serial.close()
         self.is_connected = False
         self.serial = None
-        self.ui.pushButton_Conectar.setEnabled(True)
+        self.ui.pushButton_Conectar.setText("Conectar")
         self.ui.pushButton_Detener.setEnabled(False)
         self.ui.ConfirmacionConectado.setText(message)
         self.ui.ConfirmacionConectado.setStyleSheet(f"color: {color};")
