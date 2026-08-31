@@ -1,140 +1,137 @@
-from PySide6.QtWidgets import QMainWindow
 from PySide6.QtCore import QTimer
-from ui.main_window_ui import Ui_MainWindow
-from Data_Manager import DataManager
+from PySide6.QtWidgets import QHeaderView, QMainWindow, QMessageBox
+
+from gui.plot_widget import PlotWidget
 from SerialConfig import SerialManager
+from ui.main_window_ui import Ui_MainWindow
+
 
 class MainWindow(QMainWindow):
-
     def __init__(self):
         super().__init__()
-
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.setup_connections()
         self.serial_manager = SerialManager(self.ui)
-        
+        self.setup_table()
+        self.setup_plot()
+        # Mostrar los cuatro datos por defecto; se siguen registrando todos aunque
+        # el usuario oculte uno de ellos.
+        for checkbox in (self.ui.checkBox_1, self.ui.checkBox_2, self.ui.checkBox_3, self.ui.checkBox_4):
+            checkbox.setChecked(True)
+
         self.ui.comboBox_Baud.clear()
-        self.ui.comboBox_Baud.addItems([
-        "9600",
-        "19200",
-        "38400",
-        "57600",
-        "115200"
-        ])
+        self.ui.comboBox_Baud.addItems(["9600", "19200", "38400", "57600", "115200"])
         self.ui.comboBox_Baud.setCurrentText("9600")
-        
-        self.connection_timer = QTimer()
+        self.setup_connections()
+        self.ui.pushButton_Detener.setEnabled(False)
+        self.ui.spinBox.setValue(0)
+        self.ui.spinBox_2.setValue(300)
+        self.ui.spinBox_3.setValue(-127)
+        self.ui.spinBox_4.setValue(100)
+        self.Actualizar_Lista_Puertos()
+
+        self.connection_timer = QTimer(self)
         self.connection_timer.timeout.connect(self.check_serial_connection)
-        self.connection_timer.start(2000)  # Cada 2 segundos
+        self.connection_timer.start(2000)
+
+    @property
+    def data_manager(self):
+        return self.serial_manager.data_manager
 
     def setup_connections(self):
-
-        self.ui.pushButton_Iniciar.clicked.connect(
-            self.start_acquisition
-        )
-
-        self.ui.pushButton_Detener.clicked.connect(
-            self.stop_acquisition
-        )
-        
-        self.ui.pushButton_Actualizar.clicked.connect(
-            self.Actualizar_Lista_Puertos
-        )
-        
-        self.ui.pushButton_Conectar.clicked.connect(
-            self.Conectar_COM
-        )
+        self.ui.pushButton_Iniciar.clicked.connect(self.start_acquisition)
+        self.ui.pushButton_Detener.clicked.connect(self.stop_acquisition)
+        self.ui.pushButton_Actualizar.clicked.connect(self.Actualizar_Lista_Puertos)
+        self.ui.pushButton_Conectar.clicked.connect(self.Conectar_COM)
+        self.ui.pushButton.clicked.connect(self.on_export_data)
+        for spinbox in (self.ui.spinBox, self.ui.spinBox_2, self.ui.spinBox_3, self.ui.spinBox_4):
+            spinbox.valueChanged.connect(self.update_plot_limits)
 
     def start_acquisition(self):
-
-        print("Adquisición iniciada")
+        if not self.serial_manager.is_connected:
+            QMessageBox.warning(self, "Error", "Conéctese al puerto primero")
+            return
+        if self.data_manager.start_recording():
+            self.ui.pushButton_Iniciar.setEnabled(False)
+            self.ui.pushButton_Detener.setEnabled(True)
+            self.ui.ConfirmacionConectado.setText("Conectado y grabando")
 
     def stop_acquisition(self):
-
-        print("Adquisición detenida")
-        self.serial_manager.disconnect()
-        self.ui.pushButton_Conectar.setEnabled(True)
-        self.ui.pushButton_Detener.setEnabled(False)
-        self.ui.ConfirmacionConectado.setText(f"Desconectado")
-        self.ui.ConfirmacionConectado.setStyleSheet("color: gray;")
-        
-        
-        
-        
-    def Actualizar_Lista_Puertos(self):
-        ports_info = self.serial_manager.list_ports()
-        
-        self.ui.comboBox_COM.clear()
-        
-        # Guardar los datos completos en el comboBox
-        for port, description in ports_info:
-            self.ui.comboBox_COM.addItem(description, port)  # Guardamos el puerto como data
-        
-    def Conectar_COM(self):
-        baudrate = int(self.ui.comboBox_Baud.currentText())
-        
-        # Obtener el puerto real desde el data almacenado
-        port = self.ui.comboBox_COM.currentData()  # Esto devuelve "COM9" o "COM10"
-        
-        if port:  # Verificar que hay un puerto seleccionado
-            self.serial_manager.connect(port, baudrate)
-        
-    def check_serial_connection(self):
-        """Verifica si el puerto serial sigue conectado"""
-        if self.serial_manager.is_connected:
-            self.serial_manager.check_connection()
-    
-        
-        # En tu main_window.py o donde configures la UI
-    def setup_table(self):
-        """Configura la tabla con columnas dinámicas"""
-        # Configurar columnas base
-        self.ui.tableWidget.setColumnCount(2)  # N° y Timestamp
-        self.ui.tableWidget.setHorizontalHeaderLabels(['N°', 'Timestamp'])
-        
-        # Conectar checkboxes a actualización de columnas
-        self.ui.checkBox_1.stateChanged.connect(self.update_table_columns)
-        self.ui.checkBox_2.stateChanged.connect(self.update_table_columns)
-        self.ui.checkBox_3.stateChanged.connect(self.update_table_columns)
-        self.ui.checkBox_4.stateChanged.connect(self.update_table_columns)
-
-    def update_table_columns(self):
-        """Actualiza las columnas de la tabla según checkboxes seleccionados"""
-        selected = self.get_selected_channels()
-        
-        # Contar columnas: N° (1) + Timestamp (1) + canales seleccionados
-        num_columns = 2 + len(selected)
-        self.ui.tableWidget.setColumnCount(num_columns)
-        
-        # Establecer headers
-        headers = ['N°', 'Timestamp']
-        for ch in selected:
-            headers.append(f'T_{ch+1}')
-        self.ui.tableWidget.setHorizontalHeaderLabels(headers)
-        
-        # Ajustar tamaño de columnas
-        header = self.ui.tableWidget.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeToContents)
-        
-        
-    def on_start_recording(self):
-        """Inicia grabación"""
-        if not self.serial_manager.is_connected:
-            QMessageBox.warning(None, "Error", "Conéctese al puerto primero")
-            return
-        
-        self.data_manager.start_recording()
-        self.ui.pushButton_Iniciar.setEnabled(False)
-        self.ui.pushButton_Detener.setEnabled(True)
-
-    def on_stop_recording(self):
-        """Detiene grabación"""
         self.data_manager.stop_recording()
         self.ui.pushButton_Iniciar.setEnabled(True)
         self.ui.pushButton_Detener.setEnabled(False)
 
+    def Actualizar_Lista_Puertos(self):
+        self.ui.comboBox_COM.clear()
+        for port, description in self.serial_manager.list_ports():
+            self.ui.comboBox_COM.addItem(description, port)
+
+    def Conectar_COM(self):
+        if self.serial_manager.is_connected:
+            self.data_manager.stop_recording()
+            self.serial_manager.disconnect()
+            self.ui.pushButton_Iniciar.setEnabled(True)
+            self.ui.pushButton_Detener.setEnabled(False)
+            return
+        port = self.ui.comboBox_COM.currentData()
+        if not port:
+            QMessageBox.warning(self, "Sin puerto", "Actualice la lista y seleccione un puerto COM.")
+            return
+        self.serial_manager.connect(port, int(self.ui.comboBox_Baud.currentText()))
+
+    def check_serial_connection(self):
+        if self.serial_manager.is_connected:
+            self.serial_manager.check_connection()
+
+    def setup_table(self):
+        for checkbox in (self.ui.checkBox_1, self.ui.checkBox_2, self.ui.checkBox_3, self.ui.checkBox_4):
+            checkbox.stateChanged.connect(self.update_table_columns)
+        self.update_table_columns()
+        self.ui.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+
+    def update_table_columns(self):
+        selected = self.data_manager.get_selected_channels()
+        self.ui.tableWidget.setColumnCount(6)
+        headers = ["N°", "Timestamp", "T_1", "T_2", "T_3", "T_4"]
+        self.ui.tableWidget.setHorizontalHeaderLabels(headers)
+        for channel in range(4):
+            self.ui.tableWidget.setColumnHidden(channel + 2, channel not in selected)
+        if hasattr(self, "plot_widget"):
+            self.update_plot_data()
+
+    def setup_plot(self):
+        layout = self.ui.widget.layout()
+        if layout is None:
+            from PySide6.QtWidgets import QVBoxLayout
+
+            layout = QVBoxLayout(self.ui.widget)
+            layout.setContentsMargins(0, 0, 0, 0)
+        self.plot_widget = PlotWidget(self.ui.widget)
+        layout.addWidget(self.plot_widget)
+        self.data_manager.on_data_added = self.update_plot_data
+        self.update_plot_limits()
+
+    def update_plot_data(self):
+        self.plot_widget.set_data(
+            self.data_manager.data_buffer,
+            self.data_manager.get_selected_channels(),
+            self.data_manager.total_samples,
+        )
+
+    def update_plot_limits(self):
+        self.plot_widget.set_limits(
+            self.ui.spinBox.value(),
+            self.ui.spinBox_2.value(),
+            self.ui.spinBox_3.value(),
+            self.ui.spinBox_4.value(),
+        )
+
     def on_export_data(self):
-        """Exporta datos del buffer"""
         self.data_manager.export_all_data()
+
+    def closeEvent(self, event):
+        """Garantiza que las últimas muestras pendientes lleguen al CSV al cerrar."""
+        self.data_manager.stop_recording()
+        self.serial_manager.disconnect()
+        event.accept()
