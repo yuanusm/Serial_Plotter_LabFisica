@@ -18,6 +18,8 @@ class SerialManager:
         self.port = None
         self.baudrate = None
         self.data_manager = DataManager(ui)
+        self.on_disconnected = None
+        self._line_buffer = bytearray()
         self.read_timer = QTimer()
         self.read_timer.timeout.connect(self.read_data)
         self.read_timer.start(20)
@@ -26,14 +28,18 @@ class SerialManager:
         if not self.serial or not self.is_connected:
             return
         try:
-            # Vaciar varias líneas por tick evita perder datos cuando el COM entrega
-            # más de una muestra en los 20 ms entre lecturas.
-            for _ in range(self.MAX_LINES_PER_TICK):
-                if self.serial.in_waiting <= 0:
-                    break
-                raw_data = self.serial.readline().decode("utf-8", errors="replace").strip()
-                if raw_data:
-                    self.data_manager.process_data(raw_data)
+            available = self.serial.in_waiting
+            if available <= 0:
+                return
+            self._line_buffer.extend(self.serial.read(available))
+            lines = self._line_buffer.split(b"\n")
+            tail = lines.pop()
+            ready, deferred = lines[:self.MAX_LINES_PER_TICK], lines[self.MAX_LINES_PER_TICK:]
+            self._line_buffer = bytearray(b"\n".join(deferred + [tail]))
+            for raw_data in ready:
+                decoded = raw_data.decode("utf-8", errors="replace").strip()
+                if decoded:
+                    self.data_manager.process_data(decoded)
         except (serial.SerialException, OSError):
             self.handle_disconnection()
 
@@ -74,6 +80,8 @@ class SerialManager:
         self.ui.pushButton_Detener.setEnabled(False)
         self.ui.ConfirmacionConectado.setText(message)
         self.ui.ConfirmacionConectado.setStyleSheet(f"color: {color};")
+        if self.on_disconnected is not None:
+            self.on_disconnected(message)
 
     def list_ports(self):
         return [(port.device, f"{port.device} - {port.description}") for port in serial.tools.list_ports.comports()]
