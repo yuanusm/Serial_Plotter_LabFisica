@@ -1,5 +1,7 @@
 """Gráfica cartesiana ligera, sin dependencias externas, para las muestras COM."""
 
+from collections import deque
+
 from PySide6.QtCore import QPointF, QTimer
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget
@@ -9,14 +11,13 @@ class PlotWidget(QWidget):
     """Dibuja los sensores seleccionados contra el número de muestra (eje X)."""
 
     COLORS = (QColor("#d32f2f"), QColor("#1976d2"), QColor("#388e3c"), QColor("#7b1fa2"))
-    MAX_POINTS = 60_000
     MAX_RENDERED_POINTS = 6_000
     GRID_SECONDS = 10
     GRID_Y_UNITS = 10
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.rows = []
+        self.rows = deque(maxlen=self.MAX_RENDERED_POINTS)
         self.channels = []
         self.total_samples = 0
         self.x_min = self.x_max = self.y_min = self.y_max = 0
@@ -28,14 +29,19 @@ class PlotWidget(QWidget):
         self.y_min, self.y_max = y_min, y_max
         self.request_refresh()
 
-    def set_data(self, rows, channels, total_samples):
-        rows = list(rows)[-self.MAX_POINTS :]
-        # Se conservan 60 000 muestras, pero se decima el dibujo para que la GUI
-        # permanezca fluida incluso con cuatro sensores a alta frecuencia.
-        step = max(1, len(rows) // self.MAX_RENDERED_POINTS)
-        self.rows = rows[::step]
+    def set_channels(self, channels):
         self.channels = list(channels)
-        self.total_samples = total_samples
+        self.request_refresh()
+
+    def clear_data(self):
+        self.rows.clear()
+        self.total_samples = 0
+        self.request_refresh()
+
+    def append_sample(self, row):
+        """Añade una muestra en O(1); el repintado se agrupa cada 80 ms."""
+        self.rows.append(row)
+        self.total_samples = row[0]
         self.request_refresh()
 
     def request_refresh(self):
