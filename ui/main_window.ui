@@ -376,7 +376,7 @@
              <item>
               <widget class="QTableWidget" name="tableWidget">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -595,10 +595,10 @@
            <item>
             <widget class="QSpinBox" name="spinBox_5">
              <property name="minimum">
-              <number>0</number>
+              <number>1</number>
              </property>
              <property name="maximum">
-              <number>999</number>
+              <number>9999</number>
              </property>
             </widget>
            </item>
