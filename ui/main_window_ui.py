@@ -181,7 +181,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setContentsMargins(-1, -1, 0, 5)
         self.tableWidget = QTableWidget(self.groupBox_2)
         self.tableWidget.setObjectName(u"tableWidget")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.tableWidget.sizePolicy().hasHeightForWidth())
@@ -315,8 +315,8 @@ class Ui_MainWindow(object):
 
         self.spinBox_5 = QSpinBox(self.groupBox_3)
         self.spinBox_5.setObjectName(u"spinBox_5")
-        self.spinBox_5.setMinimum(0)
-        self.spinBox_5.setMaximum(999)
+        self.spinBox_5.setMinimum(1)
+        self.spinBox_5.setMaximum(9999)
 
         self.verticalLayout_3.addWidget(self.spinBox_5)
 
@@ -362,4 +362,3 @@ class Ui_MainWindow(object):
         self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Exportar Tabla", None))
         self.pushButton_2.setText(QCoreApplication.translate("MainWindow", u"Tomar Datos Durante X Minutos", None))
     # retranslateUi
-

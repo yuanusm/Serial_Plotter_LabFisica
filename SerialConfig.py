@@ -17,6 +17,7 @@ class SerialManager:
         self.is_connected = False
         self.port = None
         self.baudrate = None
+        self.on_disconnected = None
         self.data_manager = DataManager(ui)
         self.read_timer = QTimer()
         self.read_timer.timeout.connect(self.read_data)
@@ -28,12 +29,15 @@ class SerialManager:
         try:
             # Vaciar varias líneas por tick evita perder datos cuando el COM entrega
             # más de una muestra en los 20 ms entre lecturas.
+            batch = []
             for _ in range(self.MAX_LINES_PER_TICK):
                 if self.serial.in_waiting <= 0:
                     break
                 raw_data = self.serial.readline().decode("utf-8", errors="replace").strip()
                 if raw_data:
-                    self.data_manager.process_data(raw_data)
+                    batch.append(raw_data)
+            if batch:
+                self.data_manager.process_batch(batch)
         except (serial.SerialException, OSError):
             self.handle_disconnection()
 
@@ -66,6 +70,8 @@ class SerialManager:
             QMessageBox.warning(None, "Desconexión", "El dispositivo USB se ha desconectado físicamente.")
 
     def disconnect(self, message="Desconectado manualmente", color="gray"):
+        # Una desconexión también debe persistir y cerrar la sesión activa.
+        self.data_manager.stop_recording()
         if self.serial and self.serial.is_open:
             self.serial.close()
         self.is_connected = False
@@ -74,6 +80,8 @@ class SerialManager:
         self.ui.pushButton_Detener.setEnabled(False)
         self.ui.ConfirmacionConectado.setText(message)
         self.ui.ConfirmacionConectado.setStyleSheet(f"color: {color};")
+        if self.on_disconnected is not None:
+            self.on_disconnected()
 
     def list_ports(self):
         return [(port.device, f"{port.device} - {port.description}") for port in serial.tools.list_ports.comports()]

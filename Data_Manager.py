@@ -74,6 +74,7 @@ class DataManager(QObject):
         self.is_recording = False
         self.total_samples = 0
         self.on_data_added = None
+        self.on_temperature_changed = None
         self.acquisition_started_at = None
         self.session_filepath = None
 
@@ -121,7 +122,14 @@ class DataManager(QObject):
             self.flush_to_file()
         if self.on_data_added is not None:
             self.on_data_added(row)
+        if self.on_temperature_changed is not None:
+            # El indicador principal corresponde al primer sensor recibido.
+            self.on_temperature_changed(values[0])
         return True
+
+    def process_batch(self, raw_lines):
+        """Procesa el lote recibido en un tick del puerto sin descartar líneas válidas."""
+        return sum(1 for raw_line in raw_lines if self.process_data(raw_line))
 
     def get_selected_channels(self):
         return [
