@@ -28,8 +28,8 @@ class MainWindow(QMainWindow):
         self.setup_connections()
         self.ui.pushButton_Detener.setEnabled(False)
         self.ui.spinBox.setValue(0)
-        self.ui.spinBox_2.setValue(300)
-        self.ui.spinBox_3.setValue(-127)
+        self.ui.spinBox_2.setValue(360)
+        self.ui.spinBox_3.setValue(-10)
         self.ui.spinBox_4.setValue(100)
         self.ui.spinBox_5.setRange(1, 9999)
         self.ui.spinBox_5.setValue(1)
@@ -122,21 +122,35 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_2.setEnabled(True)
 
     def setup_table(self):
-        for checkbox in (self.ui.checkBox_1, self.ui.checkBox_2, self.ui.checkBox_3, self.ui.checkBox_4):
+        for checkbox in (
+            self.ui.checkBox_1,
+            self.ui.checkBox_2,
+            self.ui.checkBox_3,
+            self.ui.checkBox_4):
             checkbox.stateChanged.connect(self.update_table_columns)
-        self.update_table_columns()
+
         table = self.ui.tableWidget
         table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         table.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+
         header = table.horizontalHeader()
         header.setStretchLastSection(False)
+
+        self.update_table_columns()
+
+        # Forzar actualización de la tabla
+        table.resizeColumnsToContents()
+
         for column in range(table.columnCount()):
             header.setSectionResizeMode(column, QHeaderView.Stretch)
+
+        table.viewport().update()
+        table.update()
 
     def update_table_columns(self):
         selected = self.data_manager.get_selected_channels()
         self.ui.tableWidget.setColumnCount(6)
-        headers = ["N°", "Timestamp", "T_1", "T_2", "T_3", "T_4"]
+        headers = ["N°", "Tiempo", "T_1", "T_2", "T_3", "T_4"]
         self.ui.tableWidget.setHorizontalHeaderLabels(headers)
         for channel in range(4):
             self.ui.tableWidget.setColumnHidden(channel + 2, channel not in selected)
@@ -160,7 +174,7 @@ class MainWindow(QMainWindow):
         self.update_plot_limits()
 
     def update_temperature(self, value):
-        self.ui.label_7.setText(f"Temperatura: {value:.2f}")
+        self.ui.label_7.setText(f"Temp Sensor 1: {value:.2f}")
 
     def _update_countdown(self):
         minutes, seconds = divmod(self.acquisition_remaining, 60)
