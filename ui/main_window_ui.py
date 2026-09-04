@@ -15,10 +15,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QGridLayout,
-    QGroupBox, QHBoxLayout, QHeaderView, QLabel,
-    QMainWindow, QPushButton, QSizePolicy, QSpinBox,
-    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QCheckBox, QComboBox,
+    QGridLayout, QGroupBox, QHBoxLayout, QHeaderView,
+    QLabel, QLayout, QMainWindow, QPushButton,
+    QSizePolicy, QSpinBox, QTableWidget, QTableWidgetItem,
+    QVBoxLayout, QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -47,38 +48,6 @@ class Ui_MainWindow(object):
         self.gridLayout_3 = QGridLayout(self.groupBox)
         self.gridLayout_3.setObjectName(u"gridLayout_3")
         self.gridLayout_3.setContentsMargins(-1, 5, -1, -1)
-        self.pushButton_Detener = QPushButton(self.groupBox)
-        self.pushButton_Detener.setObjectName(u"pushButton_Detener")
-        self.pushButton_Detener.setMinimumSize(QSize(60, 20))
-
-        self.gridLayout_3.addWidget(self.pushButton_Detener, 0, 8, 1, 1)
-
-        self.pushButton_Iniciar = QPushButton(self.groupBox)
-        self.pushButton_Iniciar.setObjectName(u"pushButton_Iniciar")
-        self.pushButton_Iniciar.setMinimumSize(QSize(50, 20))
-
-        self.gridLayout_3.addWidget(self.pushButton_Iniciar, 0, 6, 1, 1)
-
-        self.pushButton_Conectar = QPushButton(self.groupBox)
-        self.pushButton_Conectar.setObjectName(u"pushButton_Conectar")
-        self.pushButton_Conectar.setMinimumSize(QSize(65, 20))
-
-        self.gridLayout_3.addWidget(self.pushButton_Conectar, 0, 5, 1, 1)
-
-        self.comboBox_Baud = QComboBox(self.groupBox)
-        self.comboBox_Baud.setObjectName(u"comboBox_Baud")
-        self.comboBox_Baud.setMinimumSize(QSize(80, 20))
-
-        self.gridLayout_3.addWidget(self.comboBox_Baud, 0, 4, 1, 1)
-
-        self.label_2 = QLabel(self.groupBox)
-        self.label_2.setObjectName(u"label_2")
-        self.label_2.setMinimumSize(QSize(40, 20))
-        self.label_2.setMaximumSize(QSize(40, 16777215))
-        self.label_2.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
-
-        self.gridLayout_3.addWidget(self.label_2, 0, 3, 1, 1)
-
         self.label = QLabel(self.groupBox)
         self.label.setObjectName(u"label")
         self.label.setMinimumSize(QSize(45, 20))
@@ -87,11 +56,36 @@ class Ui_MainWindow(object):
 
         self.gridLayout_3.addWidget(self.label, 0, 0, 1, 1)
 
-        self.pushButton_Actualizar = QPushButton(self.groupBox)
-        self.pushButton_Actualizar.setObjectName(u"pushButton_Actualizar")
-        self.pushButton_Actualizar.setMinimumSize(QSize(70, 20))
+        self.pushButton_Conectar = QPushButton(self.groupBox)
+        self.pushButton_Conectar.setObjectName(u"pushButton_Conectar")
+        self.pushButton_Conectar.setMinimumSize(QSize(65, 20))
 
-        self.gridLayout_3.addWidget(self.pushButton_Actualizar, 0, 2, 1, 1)
+        self.gridLayout_3.addWidget(self.pushButton_Conectar, 0, 5, 1, 1)
+
+        self.pushButton_Iniciar = QPushButton(self.groupBox)
+        self.pushButton_Iniciar.setObjectName(u"pushButton_Iniciar")
+        self.pushButton_Iniciar.setMinimumSize(QSize(50, 20))
+
+        self.gridLayout_3.addWidget(self.pushButton_Iniciar, 0, 6, 1, 1)
+
+        self.ConfirmacionConectado = QLabel(self.groupBox)
+        self.ConfirmacionConectado.setObjectName(u"ConfirmacionConectado")
+        self.ConfirmacionConectado.setMinimumSize(QSize(80, 0))
+        self.ConfirmacionConectado.setMaximumSize(QSize(200, 16777215))
+
+        self.gridLayout_3.addWidget(self.ConfirmacionConectado, 3, 0, 1, 1)
+
+        self.pushButton_Detener = QPushButton(self.groupBox)
+        self.pushButton_Detener.setObjectName(u"pushButton_Detener")
+        self.pushButton_Detener.setMinimumSize(QSize(60, 20))
+
+        self.gridLayout_3.addWidget(self.pushButton_Detener, 0, 8, 1, 1)
+
+        self.comboBox_Baud = QComboBox(self.groupBox)
+        self.comboBox_Baud.setObjectName(u"comboBox_Baud")
+        self.comboBox_Baud.setMinimumSize(QSize(80, 20))
+
+        self.gridLayout_3.addWidget(self.comboBox_Baud, 0, 4, 1, 1)
 
         self.comboBox_COM = QComboBox(self.groupBox)
         self.comboBox_COM.setObjectName(u"comboBox_COM")
@@ -107,12 +101,19 @@ class Ui_MainWindow(object):
 
         self.gridLayout_3.addWidget(self.comboBox_COM, 0, 1, 1, 1)
 
-        self.ConfirmacionConectado = QLabel(self.groupBox)
-        self.ConfirmacionConectado.setObjectName(u"ConfirmacionConectado")
-        self.ConfirmacionConectado.setMinimumSize(QSize(80, 0))
-        self.ConfirmacionConectado.setMaximumSize(QSize(200, 16777215))
+        self.label_2 = QLabel(self.groupBox)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setMinimumSize(QSize(40, 20))
+        self.label_2.setMaximumSize(QSize(40, 16777215))
+        self.label_2.setAlignment(Qt.AlignmentFlag.AlignLeading|Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignVCenter)
 
-        self.gridLayout_3.addWidget(self.ConfirmacionConectado, 3, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.label_2, 0, 3, 1, 1)
+
+        self.pushButton_Actualizar = QPushButton(self.groupBox)
+        self.pushButton_Actualizar.setObjectName(u"pushButton_Actualizar")
+        self.pushButton_Actualizar.setMinimumSize(QSize(70, 20))
+
+        self.gridLayout_3.addWidget(self.pushButton_Actualizar, 0, 2, 1, 1)
 
 
         self.verticalLayout.addWidget(self.groupBox)
@@ -173,21 +174,50 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_2 = QHBoxLayout()
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout_2.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
+        self.verticalLayout_4 = QVBoxLayout()
+        self.verticalLayout_4.setSpacing(2)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.verticalLayout_4.setContentsMargins(-1, -1, 0, 5)
         self.tableWidget = QTableWidget(self.groupBox_2)
         self.tableWidget.setObjectName(u"tableWidget")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        sizePolicy2.setHorizontalStretch(1)
+        sizePolicy2 = QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Expanding)
+        sizePolicy2.setHorizontalStretch(0)
         sizePolicy2.setVerticalStretch(0)
         sizePolicy2.setHeightForWidth(self.tableWidget.sizePolicy().hasHeightForWidth())
         self.tableWidget.setSizePolicy(sizePolicy2)
-        self.tableWidget.setMinimumSize(QSize(200, 0))
+        self.tableWidget.setMinimumSize(QSize(240, 0))
+        self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
-        self.horizontalLayout_2.addWidget(self.tableWidget)
+        self.verticalLayout_4.addWidget(self.tableWidget)
+
+        self.label_7 = QLabel(self.groupBox_2)
+        self.label_7.setObjectName(u"label_7")
+        sizePolicy3 = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Preferred)
+        sizePolicy3.setHorizontalStretch(0)
+        sizePolicy3.setVerticalStretch(0)
+        sizePolicy3.setHeightForWidth(self.label_7.sizePolicy().hasHeightForWidth())
+        self.label_7.setSizePolicy(sizePolicy3)
+        font2 = QFont()
+        font2.setPointSize(12)
+        self.label_7.setFont(font2)
+        self.label_7.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+        self.label_7.setTextFormat(Qt.TextFormat.PlainText)
+        self.label_7.setScaledContents(False)
+        self.label_7.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.verticalLayout_4.addWidget(self.label_7)
+
+
+        self.horizontalLayout_2.addLayout(self.verticalLayout_4)
 
         self.widget = QWidget(self.groupBox_2)
         self.widget.setObjectName(u"widget")
-        sizePolicy2.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
-        self.widget.setSizePolicy(sizePolicy2)
+        sizePolicy4 = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        sizePolicy4.setHorizontalStretch(0)
+        sizePolicy4.setVerticalStretch(0)
+        sizePolicy4.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy4)
         self.widget.setMinimumSize(QSize(200, 0))
 
         self.horizontalLayout_2.addWidget(self.widget)
@@ -304,26 +334,25 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
-
-        QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Adquisici\u00f3n de Datos", None))
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Conectar con Sensor", None))
-        self.pushButton_Detener.setText(QCoreApplication.translate("MainWindow", u"Detener", None))
-        self.pushButton_Iniciar.setText(QCoreApplication.translate("MainWindow", u"Iniciar", None))
-        self.pushButton_Conectar.setText(QCoreApplication.translate("MainWindow", u"Conectar", None))
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u"Baud:", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Puerto:", None))
-        self.pushButton_Actualizar.setText(QCoreApplication.translate("MainWindow", u"Actualizar", None))
-        self.comboBox_COM.setCurrentText("")
+        self.pushButton_Conectar.setText(QCoreApplication.translate("MainWindow", u"Conectar", None))
+        self.pushButton_Iniciar.setText(QCoreApplication.translate("MainWindow", u"Iniciar", None))
         self.ConfirmacionConectado.setText(QCoreApplication.translate("MainWindow", u"Desconectado", None))
+        self.pushButton_Detener.setText(QCoreApplication.translate("MainWindow", u"Detener", None))
+        self.comboBox_COM.setCurrentText("")
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"Baud:", None))
+        self.pushButton_Actualizar.setText(QCoreApplication.translate("MainWindow", u"Actualizar", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Datos", None))
         self.checkBox_1.setText(QCoreApplication.translate("MainWindow", u"Sensor Temp 1", None))
         self.checkBox_2.setText(QCoreApplication.translate("MainWindow", u"Sensor Temp 2", None))
         self.checkBox_3.setText(QCoreApplication.translate("MainWindow", u"Sensor Temp 3", None))
         self.checkBox_4.setText(QCoreApplication.translate("MainWindow", u"Sensor Temp 4", None))
+        self.label_7.setText(QCoreApplication.translate("MainWindow", u"Temperatura", None))
         self.groupBox_4.setTitle(QCoreApplication.translate("MainWindow", u"L\u00edmites de Gr\u00e1fica", None))
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"X", None))
         self.label_6.setText(QCoreApplication.translate("MainWindow", u"Y", None))
