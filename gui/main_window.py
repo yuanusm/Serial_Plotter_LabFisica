@@ -53,6 +53,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Conéctese al puerto primero")
             return
         if self.data_manager.start_recording():
+            self.plot_widget.clear_data()
             self.ui.pushButton_Iniciar.setEnabled(False)
             self.ui.pushButton_Detener.setEnabled(True)
             self.ui.ConfirmacionConectado.setText("Conectado y grabando")
@@ -109,15 +110,12 @@ class MainWindow(QMainWindow):
             layout.setContentsMargins(0, 0, 0, 0)
         self.plot_widget = PlotWidget(self.ui.widget)
         layout.addWidget(self.plot_widget)
-        self.data_manager.on_data_added = self.update_plot_data
+        self.data_manager.on_data_added = self.plot_widget.append_sample
         self.update_plot_limits()
 
     def update_plot_data(self):
-        self.plot_widget.set_data(
-            self.data_manager.data_buffer,
-            self.data_manager.get_selected_channels(),
-            self.data_manager.total_samples,
-        )
+        """Actualiza sólo la configuración; las muestras llegan incrementalmente."""
+        self.plot_widget.set_channels(self.data_manager.get_selected_channels())
 
     def update_plot_limits(self):
         self.plot_widget.set_limits(
@@ -132,6 +130,6 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Garantiza que las últimas muestras pendientes lleguen al CSV al cerrar."""
-        self.data_manager.stop_recording()
+        self.data_manager.shutdown()
         self.serial_manager.disconnect()
         event.accept()
